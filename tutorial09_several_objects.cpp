@@ -92,6 +92,8 @@ int main( void )
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
+	bool isLightActive = true;
+
 	// Read our .obj file
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
@@ -135,7 +137,7 @@ int main( void )
 	double lastTime = glfwGetTime();
 	int nbFrames = 0;
 
-	float translatedistance = 1.9f;
+	float translatedistance = 1.875f;
 
 	do{
 
@@ -235,32 +237,9 @@ int main( void )
 			(void*)0           // element array buffer offset
 		);
 
-
-
-
 		////// End of rendering of the first object //////
 		////// Start of the rendering of the second object //////
 
-		// In our very specific case, the 2 objects use the same shader.
-		// So it's useless to re-bind the "programID" shader, since it's already the current one.
-		//glUseProgram(programID);
-		
-		// Similarly : don't re-set the light position and camera matrix in programID,
-		// it's still valid !
-		// *** You would have to do it if you used another shader ! ***
-		//glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
-		//glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "programID"
-
-		
-		// Again : this is already done, but this only works because we use the same shader.
-		//// Bind our texture in Texture Unit 0
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, Texture);
-		//// Set our "myTextureSampler" sampler to user Texture Unit 0
-		//glUniform1i(TextureID, 0);
-		
-		
-		// BUT the Model matrix is different (and the MVP too)
 		ModelMatrix1 = glm::mat4(1.0);
 		
 		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(-translatedistance, 0.0f, 0.0f));
@@ -308,9 +287,6 @@ int main( void )
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // Rotate 90 degrees around the X-axis
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // No rotation around the Z-axis
 
-		/*
-		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z
-		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); */
 
 		glm::mat4 MVP3 = ProjectionMatrix * ViewMatrix * ModelMatrix1;
 
@@ -351,11 +327,6 @@ int main( void )
 		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(0.0f, -translatedistance, 0.0f));
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
-
-		/*
-		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(0.0f, -translatedistance, 0.0f));
-		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(270.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); */
 
 		glm::mat4 MVP4 = ProjectionMatrix * ViewMatrix * ModelMatrix1;
 

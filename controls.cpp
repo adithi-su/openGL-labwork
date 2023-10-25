@@ -44,9 +44,39 @@ void computeMatricesFromInputs(){
 	// Compute time difference between current and last frame
 	double currentTime = glfwGetTime();
 	float deltaTime = float(currentTime - lastTime);
+	
+	// 'w' key is pressed, move the camera closer to the origin
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		// Move closer to origin (decrease r)
+		r -= deltaTime * speed;
+		if (r < 0.1f) {
+			r = 0.1f;  // Prevent getting too close to the origin
+		}
+	}
+	// 's' key is pressed, move the camera farther from the origin
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		// Move away from origin (increase r)
+		r += deltaTime * speed;
+	}
+	// Rotate left, maintaining the radial distance from the origin
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		phi -= deltaTime * speed;
+		if (phi < 0.0f) {
+			phi += glm::two_pi<float>();
+		}
+		theta = glm::radians(90.0f); // Reset vertical angle to 90 degrees
+	}
+	// Rotate right, maintaining the radial distance from the origin
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		phi += deltaTime * speed;
+		if (phi > glm::two_pi<float>()) {
+			phi -= glm::two_pi<float>();
+		}
+		theta = glm::radians(90.0f); // Reset vertical angle to 90 degrees
+	}
 
 	// Move forward
-	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
 		// Move up (decrease theta)
 		theta -= deltaTime * speed;
 		//if (theta < 0.0f) {
@@ -54,42 +84,14 @@ void computeMatricesFromInputs(){
 		//}
 	}
 	// Move backward
-	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
 		theta += deltaTime * speed;
 		//if (theta > glm::radians(180.0f)) {
 		//	theta = glm::radians(180.0f);  
 		//}
 	}
-	// Strafe right
-	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
-		// Move right (increase phi)
-		phi += deltaTime * speed;
-		if (phi > glm::two_pi<float>()) {
-			phi -= glm::two_pi<float>();  // phi (0 to 2pi)
-		}
-	}
-	// Strafe left
-	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
-		// Move left (decrease phi)
-		phi -= deltaTime * speed;
-		if (phi < 0.0f) {
-			phi += glm::two_pi<float>();  // phi (0 to 2pi)
-		}
-	}
-	// Handle keyboard inputs - assignment
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		// 'w' key is pressed, move the camera closer to the origin
-		// Move closer to origin (decrease r)
-		r -= deltaTime * speed;
-		if (r < 0.1f) {
-			r = 0.1f;  // Prevent getting too close to the origin
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		// 's' key is pressed, move the camera farther from the origin
-		// Move away from origin (increase r)
-		r += deltaTime * speed;
-	}
+
+
 
 	// camera position based on r, theta, and phi
 	glm::vec3 position(
