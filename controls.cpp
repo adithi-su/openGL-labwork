@@ -12,10 +12,10 @@ using namespace glm;
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 
-glm::mat4 getViewMatrix(){
+glm::mat4 getViewMatrix() {
 	return ViewMatrix;
 }
-glm::mat4 getProjectionMatrix(){
+glm::mat4 getProjectionMatrix() {
 	return ProjectionMatrix;
 }
 
@@ -36,7 +36,7 @@ float r = 10.0f;
 //glm::vec3 position = glm::vec3( 0, 0, 5 ); 
 
 
-void computeMatricesFromInputs(){
+void computeMatricesFromInputs() {
 
 	// glfwGetTime is called only once, the first time this function is called
 	static double lastTime = glfwGetTime();
@@ -44,7 +44,7 @@ void computeMatricesFromInputs(){
 	// Compute time difference between current and last frame
 	double currentTime = glfwGetTime();
 	float deltaTime = float(currentTime - lastTime);
-	
+
 	// 'w' key is pressed, move the camera closer to the origin
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		// Move closer to origin (decrease r)
@@ -59,7 +59,7 @@ void computeMatricesFromInputs(){
 		r += deltaTime * speed;
 	}
 	// Rotate left, maintaining the radial distance from the origin
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		phi -= deltaTime * speed;
 		if (phi < 0.0f) {
 			phi += glm::two_pi<float>();
@@ -67,7 +67,7 @@ void computeMatricesFromInputs(){
 		theta = glm::radians(90.0f); // Reset vertical angle to 90 degrees
 	}
 	// Rotate right, maintaining the radial distance from the origin
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		phi += deltaTime * speed;
 		if (phi > glm::two_pi<float>()) {
 			phi -= glm::two_pi<float>();

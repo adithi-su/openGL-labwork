@@ -21,12 +21,14 @@ using namespace glm;
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
 
-int main( void )
+double lastToggleTime = 0.0;
+
+int main(void)
 {
 	// Initialise GLFW
-	if( !glfwInit() )
+	if (!glfwInit())
 	{
-		fprintf( stderr, "Failed to initialize GLFW\n" );
+		fprintf(stderr, "Failed to initialize GLFW\n");
 		getchar();
 		return -1;
 	}
@@ -36,15 +38,15 @@ int main( void )
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Tutorial 09 - Rendering several models", NULL, NULL);
-	if( window == NULL ){
-		fprintf( stderr, "Failed to open GLFW window.\n" );
+	window = glfwCreateWindow(1024, 768, "Tutorial 09 - Rendering several models", NULL, NULL);
+	if (window == NULL) {
+		fprintf(stderr, "Failed to open GLFW window.\n");
 		getchar();
 		glfwTerminate();
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-    
+
 	// Initialize GLEW
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
@@ -55,12 +57,12 @@ int main( void )
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    // Hide the mouse and enable unlimited mouvement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-    // Set the mouse at the center of the screen
-    glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+	// Hide the mouse and enable unlimited mouvement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// Set the mouse at the center of the screen
+	glfwPollEvents();
+	glfwSetCursorPos(window, 1024 / 2, 768 / 2);
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -68,18 +70,21 @@ int main( void )
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS); 
+	glDepthFunc(GL_LESS);
 
 	// Cull triangles which normal is not towards the camera
 	//glEnable(GL_CULL_FACE);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+	GLuint programID = LoadShaders("StandardShading.vertexshader", "StandardShading.fragmentshader");
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
 	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+	GLuint LID = glGetUniformLocation(programID, "L");
+
+	bool modifyLight = true;
 
 	// Get a handle for our buffers
 	GLuint vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
@@ -88,9 +93,9 @@ int main( void )
 
 	// Load the texture
 	GLuint Texture = loadDDS("uvmap.DDS");
-	
+
 	// Get a handle for our "myTextureSampler" uniform
-	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
 
 	bool isLightActive = true;
 
@@ -127,7 +132,7 @@ int main( void )
 	GLuint elementbuffer;
 	glGenBuffers(1, &elementbuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
 
 
 	// Define the vertices, UVs, and normals for the green rectangle
@@ -187,14 +192,14 @@ int main( void )
 
 	float translatedistance = 1.875f;
 
-	do{
+	do {
 
 		// Measure speed
 		double currentTime = glfwGetTime();
 		nbFrames++;
-		if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1sec ago
+		if (currentTime - lastTime >= 1.0) { // If last prinf() was more than 1sec ago
 			// printf and reset
-			printf("%f ms/frame\n", 1000.0/double(nbFrames));
+			printf("%f ms/frame\n", 1000.0 / double(nbFrames));
 			nbFrames = 0;
 			lastTime += 1.0;
 		}
@@ -208,6 +213,14 @@ int main( void )
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
 
+		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+			if (currentTime - lastToggleTime >= 0.5) {
+				lastToggleTime = currentTime;
+				modifyLight = !modifyLight;
+				glUniform1i(LID, modifyLight ? 1 : 0);
+			}
+		}
+
 		////// Start of rendering the rectangle with same texture as suzanne//////
 		// Use our shader
 		glUseProgram(programID);
@@ -218,7 +231,7 @@ int main( void )
 
 		// Set the position, size, and texture for the green rectangle
 		glm::mat4 ModelMatrixRect = glm::mat4(1.0);
-		ModelMatrixRect = glm::scale(ModelMatrixRect, glm::vec3(2.75f, 2.75f, 1.0f));
+		ModelMatrixRect = glm::scale(ModelMatrixRect, glm::vec3(3.0f, 3.0f, 1.0f));
 		ModelMatrixRect = glm::translate(ModelMatrixRect, glm::vec3(0.0f, 0.0f, -1.0f));
 
 		glm::mat4 MVPRect = ProjectionMatrix * ViewMatrix * ModelMatrixRect;
@@ -276,13 +289,13 @@ int main( void )
 			(void*)0           // element array buffer offset
 		);
 		////// End of rendering the green rectangle //////
-		
-		
+
+
 		////// Start of the rendering of the first object //////
 		/*
 		// Use our shader
 		glUseProgram(programID);
-	
+
 		glm::vec3 lightPos = glm::vec3(4,4,4);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "programID"
@@ -358,11 +371,11 @@ int main( void )
 		////// Start of the rendering of the second object //////
 
 		ModelMatrix1 = glm::mat4(1.0);
-		
+
 		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(-translatedistance, 0.0f, 0.0f));
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(270.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		
+
 		glm::mat4 MVP2 = ProjectionMatrix * ViewMatrix * ModelMatrix1;
 
 		// Send our transformation to the currently bound shader, 
@@ -372,7 +385,7 @@ int main( void )
 
 
 		// The rest is exactly the same as the first object
-		
+
 		// 1rst attribute buffer : vertices
 		//glEnableVertexAttribArray(vertexPosition_modelspaceID); // Already enabled
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -443,7 +456,7 @@ int main( void )
 
 		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(0.0f, -translatedistance, 0.0f));
 		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
+		ModelMatrix1 = glm::rotate(ModelMatrix1, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		glm::mat4 MVP4 = ProjectionMatrix * ViewMatrix * ModelMatrix1;
 
@@ -475,7 +488,7 @@ int main( void )
 
 		// Draw the triangles !
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, (void*)0);
-	
+
 
 		////// End of rendering of the fourth object //////
 
@@ -488,8 +501,8 @@ int main( void )
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-		   glfwWindowShouldClose(window) == 0 );
+	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+		glfwWindowShouldClose(window) == 0);
 
 	// Cleanup VBO and shader
 	glDeleteBuffers(1, &vertexbuffer);
@@ -510,4 +523,3 @@ int main( void )
 
 	return 0;
 }
-
