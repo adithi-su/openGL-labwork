@@ -71,7 +71,7 @@ int main( void )
 	glDepthFunc(GL_LESS); 
 
 	// Cull triangles which normal is not towards the camera
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
@@ -129,6 +129,54 @@ int main( void )
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
 
+
+	// Define the vertices, UVs, and normals for the green rectangle
+	std::vector<glm::vec3> rectVertices = {
+		glm::vec3(-1.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f)
+	};
+
+	std::vector<glm::vec2> rectUVs = {
+		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 0.0f),
+		glm::vec2(1.0f, 1.0f),
+		glm::vec2(0.0f, 1.0f)
+	};
+
+	std::vector<glm::vec3> rectNormals = {
+		glm::vec3(0.0f, 0.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f)
+	};
+
+	// Create a buffer for the rectangle vertices, UVs, and normals
+	GLuint rectVertexBuffer;
+	glGenBuffers(1, &rectVertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, rectVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, rectVertices.size() * sizeof(glm::vec3), &rectVertices[0], GL_STATIC_DRAW);
+
+	GLuint rectUVBuffer;
+	glGenBuffers(1, &rectUVBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, rectUVBuffer);
+	glBufferData(GL_ARRAY_BUFFER, rectUVs.size() * sizeof(glm::vec2), &rectUVs[0], GL_STATIC_DRAW);
+
+	GLuint rectNormalBuffer;
+	glGenBuffers(1, &rectNormalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, rectNormalBuffer);
+	glBufferData(GL_ARRAY_BUFFER, rectNormals.size() * sizeof(glm::vec3), &rectNormals[0], GL_STATIC_DRAW);
+
+	// Define the indices for the rectangle
+	std::vector<unsigned short> rectIndices = { 0, 1, 2, 0, 2, 3 };
+
+	// Create a buffer for the rectangle indices
+	GLuint rectElementBuffer;
+	glGenBuffers(1, &rectElementBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rectElementBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, rectIndices.size() * sizeof(unsigned short), &rectIndices[0], GL_STATIC_DRAW);
+
 	// Get a handle for our "LightPosition" uniform
 	glUseProgram(programID);
 	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
@@ -159,17 +207,86 @@ int main( void )
 		computeMatricesFromInputs();
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
+
+		////// Start of rendering the rectangle with same texture as suzanne//////
+		// Use our shader
+		glUseProgram(programID);
+
+		glm::vec3 lightPos = glm::vec3(4, 4, 4);
+		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+		// Set the position, size, and texture for the green rectangle
+		glm::mat4 ModelMatrixRect = glm::mat4(1.0);
+		ModelMatrixRect = glm::scale(ModelMatrixRect, glm::vec3(2.75f, 2.75f, 1.0f));
+		ModelMatrixRect = glm::translate(ModelMatrixRect, glm::vec3(0.0f, 0.0f, -1.0f));
+
+		glm::mat4 MVPRect = ProjectionMatrix * ViewMatrix * ModelMatrixRect;
+
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVPRect[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrixRect[0][0]);
+
+		// Bind the green rectangle's texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, Texture);
+		glUniform1i(TextureID, 0);
+
+		// Set the attribute buffers for the green rectangle
+		glEnableVertexAttribArray(vertexPosition_modelspaceID);
+		glBindBuffer(GL_ARRAY_BUFFER, rectVertexBuffer);
+		glVertexAttribPointer(
+			vertexPosition_modelspaceID, // The attribute we want to configure
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glEnableVertexAttribArray(vertexUVID);
+		glBindBuffer(GL_ARRAY_BUFFER, rectUVBuffer);
+		glVertexAttribPointer(
+			vertexUVID,                       // The attribute we want to configure
+			2,                                // size : U+V => 2
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		glEnableVertexAttribArray(vertexNormal_modelspaceID);
+		glBindBuffer(GL_ARRAY_BUFFER, rectNormalBuffer);
+		glVertexAttribPointer(
+			vertexNormal_modelspaceID,        // The attribute we want to configure
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		// Index buffer for the green rectangle
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rectElementBuffer);
+
+		// Draw the green rectangle
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			rectIndices.size(),    // count
+			GL_UNSIGNED_SHORT,   // type
+			(void*)0           // element array buffer offset
+		);
+		////// End of rendering the green rectangle //////
 		
 		
 		////// Start of the rendering of the first object //////
-		
+		/*
 		// Use our shader
 		glUseProgram(programID);
 	
 		glm::vec3 lightPos = glm::vec3(4,4,4);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]); // This one doesn't change between objects, so this can be done once for all objects that use "programID"
-		
+		*/
 		glm::mat4 ModelMatrix1 = glm::mat4(1.0);
 
 		ModelMatrix1 = glm::translate(ModelMatrix1, glm::vec3(translatedistance, 0.0f, 0.0f));
@@ -381,6 +498,12 @@ int main( void )
 	glDeleteBuffers(1, &elementbuffer);
 	glDeleteProgram(programID);
 	glDeleteTextures(1, &Texture);
+
+	// Clean up the green rectangle buffers
+	glDeleteBuffers(1, &rectVertexBuffer);
+	glDeleteBuffers(1, &rectUVBuffer);
+	glDeleteBuffers(1, &rectNormalBuffer);
+	glDeleteBuffers(1, &rectElementBuffer);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
